@@ -1,0 +1,267 @@
+// STEAM Hub — personal teaching dashboard
+// Prisma schema (SQLite, single-user local database)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth / profile
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String // bcrypt hash
+  schoolName    String    @default("International School")
+  semesterStart DateTime?
+  semesterEnd   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Courses / curriculum
+// ---------------------------------------------------------------------------
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  gradeLevel  String // e.g. "Grade 8", "Grades 8-10"
+  description String   @default("")
+  color       String   @default("#0000FF") // hex, used for calendar / schedule coding
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  units          Unit[]
+  enrollments    Enrollment[]
+  assignments    Assignment[]
+  scheduleBlocks ScheduleBlock[]
+  tasks          Task[]
+  projectIdeas   ProjectIdea[]
+  attendance     Attendance[]
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name        String
+  order       Int      @default(0)
+  description String   @default("")
+  createdAt   DateTime @default(now())
+
+  lessons Lesson[]
+
+  @@index([courseId])
+}
+
+enum LessonStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Lesson {
+  id      String       @id @default(cuid())
+  unitId  String
+  unit    Unit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title   String
+  order   Int          @default(0)
+  status  LessonStatus @default(PLANNED)
+  content String       @default("") // notes / content body
+
+  @@index([unitId])
+}
+
+// ---------------------------------------------------------------------------
+// Students
+// ---------------------------------------------------------------------------
+
+model Student {
+  id         String   @id @default(cuid())
+  name       String
+  gradeLevel String
+  email      String?
+  notes      String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  enrollments Enrollment[]
+  grades      Grade[]
+  attendance  Attendance[]
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime @default(now())
+
+  @@unique([studentId, courseId])
+  @@index([courseId])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  studentId String
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId  String?
+  course    Course?          @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  date      DateTime         @default(now())
+  status    AttendanceStatus @default(PRESENT)
+  notes     String           @default("")
+
+  @@index([studentId])
+}
+
+// ---------------------------------------------------------------------------
+// Assignments / grading
+// ---------------------------------------------------------------------------
+
+model Assignment {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @default("")
+  dueDate     DateTime
+  maxPoints   Float    @default(100)
+  rubricNotes String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  grades Grade[]
+
+  @@index([courseId])
+}
+
+model Grade {
+  id           String     @id @default(cuid())
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  score        Float?
+  feedback     String     @default("")
+  gradedAt     DateTime   @default(now())
+
+  @@unique([studentId, assignmentId])
+  @@index([assignmentId])
+}
+
+// ---------------------------------------------------------------------------
+// Tasks (kanban)
+// ---------------------------------------------------------------------------
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String       @default("")
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  courseId    String?
+  course      Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([courseId])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Project ideas bank
+// ---------------------------------------------------------------------------
+
+model ProjectIdea {
+  id           String    @id @default(cuid())
+  title        String
+  description  String    @default("")
+  tags         String    @default("") // comma-separated: "3D printing,architecture"
+  gradeLevel   String
+  duration     String // e.g. "2 weeks"
+  materials    String    @default("")
+  objectives   String    @default("")
+  usedDate     DateTime?
+  usedCourseId String?
+  usedCourse   Course?   @relation(fields: [usedCourseId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+
+  @@index([usedCourseId])
+}
+
+// ---------------------------------------------------------------------------
+// Schedule & calendar
+// ---------------------------------------------------------------------------
+
+model ScheduleBlock {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  dayOfWeek Int // 0 = Sunday .. 6 = Saturday
+  startTime String // "09:00"
+  endTime   String // "09:50"
+  room      String   @default("")
+  semester  String   @default("Fall 2026")
+  createdAt DateTime @default(now())
+
+  @@index([courseId])
+}
+
+enum CalendarEventType {
+  HOLIDAY
+  EXAM
+  EXHIBITION
+  BREAK
+  OTHER
+}
+
+model CalendarEvent {
+  id          String            @id @default(cuid())
+  title       String
+  date        DateTime
+  endDate     DateTime?
+  type        CalendarEventType @default(OTHER)
+  description String            @default("")
+  createdAt   DateTime          @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Activity log
+// ---------------------------------------------------------------------------
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String // short verb phrase, e.g. "Added grade"
+  details   String   @default("")
+  timestamp DateTime @default(now())
+}

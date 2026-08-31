@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: toggled via `.dark` on <html> (see components/theme-toggle) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f5f7ff;
+  --color-surface-hover: #eceffe;
+  --color-ink: #1a1a2e;
+  --color-ink-muted: #5b5d7a;
+  --color-primary: #0000ff;
+  --color-primary-foreground: #ffffff;
+  --color-danger: #ff3b3b;
+  --color-success: #00c853;
+  --color-border: #e0e4ff;
+  --shadow-color: 224 100% 27%;
+}
+
+.dark {
+  --color-bg: #0e0e1e;
+  --color-surface: #16172e;
+  --color-surface-hover: #1d1e3a;
+  --color-ink: #edeeff;
+  --color-ink-muted: #a7a9c9;
+  --color-primary: #4d4dff;
+  --color-primary-foreground: #ffffff;
+  --color-danger: #ff5c5c;
+  --color-success: #16d979;
+  --color-border: #2a2b52;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-border: var(--color-border);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 8px;
+  --radius-modal: 12px;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+/* Scrollbar polish */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-surface-hover);
+}
+
+/* Reusable component classes */
+@layer components {
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: 0 1px 2px hsl(var(--shadow-color) / 0.04), 0 1px 8px hsl(var(--shadow-color) / 0.03);
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-border);
+  }
+  .btn-secondary:hover {
+    background: var(--color-surface-hover);
+  }
+
+  .btn-danger {
+    background: var(--color-danger);
+    color: #ffffff;
+  }
+  .btn-danger:hover {
+    filter: brightness(1.08);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink-muted);
+  }
+  .btn-ghost:hover {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .input {
+    @apply w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-ink);
+  }
+  .input:focus {
+    border-color: var(--color-primary);
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
