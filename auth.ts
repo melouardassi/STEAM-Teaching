@@ -4,6 +4,9 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Required on hosts (Netlify, Vercel, ...) where the request's origin
+  // isn't known at build time — NextAuth trusts the incoming Host header.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",

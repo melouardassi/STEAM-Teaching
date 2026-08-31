@@ -1,7 +1,11 @@
-import { PrismaClient, LessonStatus, TaskStatus, TaskPriority, CalendarEventType, AttendanceStatus } from "@prisma/client";
+import { LessonStatus, TaskStatus, TaskPriority, CalendarEventType, AttendanceStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { createPrismaClient } from "../lib/prisma";
 
-const prisma = new PrismaClient();
+// Uses the same adapter-aware client as the app: seeds the local SQLite
+// file by default, or a Turso database if TURSO_DATABASE_URL is set
+// (e.g. `TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run db:seed`).
+const prisma = createPrismaClient();
 
 function daysFromNow(days: number, hour = 9, minute = 0) {
   const d = new Date();

@@ -72,6 +72,38 @@ Change the password from **Settings → Change password** once you're in.
   bulk import for students and courses.
 - **Dark mode** — toggle in the sidebar; the electric-blue accent stays constant.
 
+## Deploying (Netlify)
+
+Netlify (and any serverless host) has no persistent disk, so the local SQLite
+*file* (`prisma/dev.db`) won't work in production — `lib/prisma.ts` already
+handles this: it uses the local file when `TURSO_DATABASE_URL` is unset (dev),
+and a hosted [Turso](https://turso.tech) libSQL database when it is set (prod).
+`netlify.toml` is already in the repo and points Netlify at `@netlify/plugin-nextjs`.
+
+1. **Create a free Turso database** — [turso.tech](https://turso.tech) → sign up →
+   ```bash
+   turso db create steam-hub
+   turso db show steam-hub --url        # -> TURSO_DATABASE_URL
+   turso db tokens create steam-hub     # -> TURSO_AUTH_TOKEN
+   ```
+2. **Apply the schema to it** (run locally, once):
+   ```bash
+   TURSO_DATABASE_URL="libsql://..." TURSO_AUTH_TOKEN="..." npx prisma db push
+   TURSO_DATABASE_URL="libsql://..." TURSO_AUTH_TOKEN="..." npm run db:seed
+   ```
+3. **In the Netlify site → Site configuration → Environment variables**, add:
+   | Key | Value |
+   | --- | --- |
+   | `TURSO_DATABASE_URL` | from step 1 |
+   | `TURSO_AUTH_TOKEN` | from step 1 |
+   | `AUTH_SECRET` | output of `openssl rand -base64 32` |
+4. **Set the branch to deploy** (Site configuration → Build & deploy → Deploy
+   contexts) to `claude/steam-hub-dashboard-litwxm`, or merge it into `main` first.
+5. Trigger a deploy (push a commit, or **Deploys → Trigger deploy**).
+
+Without steps 1–3 the site will build successfully but every page that touches
+the database will error at runtime — the build itself can't catch that.
+
 ## Project structure
 
 ```
