@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql";
+// The "/web" build talks to Turso over plain HTTP (via @libsql/client/web)
+// instead of the native-binding client — required on serverless hosts like
+// Netlify Functions, which can't load compiled C++/Rust addons.
+import { PrismaLibSQL } from "@prisma/adapter-libsql/web";
 
 // Local dev uses the plain SQLite file (DATABASE_URL="file:./dev.db").
 // On a serverless host (Netlify, Vercel, ...) there's no persistent disk,
