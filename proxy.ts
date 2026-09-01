@@ -1,5 +1,12 @@
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { authConfig } from "@/auth.config";
+
+// Built from the lightweight, Prisma-free config — NOT imported from
+// "@/auth" — so this function's bundle never pulls in Prisma's native
+// query engine binary. Checking for a valid session only needs to verify
+// the signed JWT cookie, which doesn't require a database.
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
