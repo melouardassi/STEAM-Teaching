@@ -4,12 +4,19 @@ A private, single-user teaching dashboard for a Design & Technology teacher runn
 3D printing, architecture, robotics, branding, and product design courses (grades
 8–10) within an IB framework.
 
+> **No login screen.** This build has no authentication — anyone with the deployed
+> URL can view and edit the data. Fine for a quick demo/preview link; if you deploy
+> it somewhere lasting, put it behind Netlify's built-in **Visitor access** password
+> (Site configuration → Visitor access) or reintroduce auth (see git history for the
+> removed NextAuth setup).
+
 ## Tech stack
 
 - **Framework:** Next.js 16 (App Router) + TypeScript
 - **Styling:** Tailwind CSS v4, custom design tokens, Inter + IBM Plex Sans
 - **Database:** SQLite via Prisma ORM (local file DB — `prisma/dev.db`)
-- **Auth:** NextAuth.js (Auth.js v5) with a credentials provider, single hardcoded admin user
+- **Auth:** none — this is a private, single-user deployment with no login screen;
+  every page loads straight to the dashboard against the one seeded teacher account
 - **Drag & drop:** dnd-kit (Task Manager kanban board)
 - **Charts:** Recharts (grade distribution)
 - **Toasts:** Sonner
@@ -28,16 +35,6 @@ Then open [http://localhost:3000](http://localhost:3000).
 > The first `npm install` already ran `prisma generate` via its `postinstall` hook.
 > If you ever change `prisma/schema.prisma`, run `npm run db:migrate` again to create
 > a new migration and regenerate the client.
-
-### Login
-
-There is no registration page — this app is for one teacher.
-
-| Email | Password |
-| --- | --- |
-| `admin@steamhub.app` | `changeme123` |
-
-Change the password from **Settings → Change password** once you're in.
 
 ### Useful scripts
 
@@ -68,8 +65,8 @@ Change the password from **Settings → Change password** once you're in.
   page quick-adds a task.
 - **Project Ideas Bank** — a browsable library of STEAM project ideas, taggable by
   subject, markable as "used," and one click away from becoming an assignment.
-- **Settings** — profile, semester dates & breaks, password change, and CSV-paste
-  bulk import for students and courses.
+- **Settings** — profile, semester dates & breaks, and CSV-paste bulk import for
+  students and courses.
 - **Dark mode** — toggle in the sidebar; the electric-blue accent stays constant.
 
 ## Deploying (Netlify)
@@ -96,7 +93,6 @@ and a hosted [Turso](https://turso.tech) libSQL database when it is set (prod).
    | --- | --- |
    | `TURSO_DATABASE_URL` | from step 1 |
    | `TURSO_AUTH_TOKEN` | from step 1 |
-   | `AUTH_SECRET` | output of `openssl rand -base64 32` |
 4. **Set the branch to deploy** (Site configuration → Build & deploy → Deploy
    contexts) to `claude/steam-hub-dashboard-litwxm`, or merge it into `main` first.
 5. Trigger a deploy (push a commit, or **Deploys → Trigger deploy**).
@@ -108,19 +104,16 @@ the database will error at runtime — the build itself can't catch that.
 
 ```
 app/
-  (app)/            # authenticated routes, wrapped in the sidebar shell
+  (app)/            # every route, wrapped in the sidebar shell — no auth gate
     page.tsx         # dashboard
     schedule/ courses/ students/ assignments/ tasks/ projects/ settings/
-  login/             # sign-in page (outside the shell)
-  api/auth/[...nextauth]/
 components/          # UI, organized by feature folder
 lib/
   actions/           # server actions (mutations), one file per domain
+  current-user.ts    # fetches the single seeded teacher account (no session)
   prisma.ts constants.ts nav.ts utils.ts activity.ts
 prisma/
   schema.prisma seed.ts migrations/
-auth.ts              # NextAuth config
-proxy.ts              # route protection (Next.js 16's `middleware` → `proxy`)
 ```
 
 ## Design system

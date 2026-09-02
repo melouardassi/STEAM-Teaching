@@ -4,19 +4,16 @@ import { QuickStats } from "@/components/dashboard/quick-stats";
 import { TodaySchedule } from "@/components/dashboard/today-schedule";
 import { UpcomingTasks } from "@/components/dashboard/upcoming-tasks";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const session = await auth();
   const now = new Date();
   const dayOfWeek = now.getDay();
   const quote = quoteForToday(now);
 
-  const dbUser = session?.user?.id
-    ? await prisma.user.findUnique({ where: { id: session.user.id } })
-    : null;
+  const dbUser = await getCurrentUser();
   const firstName = (dbUser?.name ?? "there").split(" ")[0];
 
   const [

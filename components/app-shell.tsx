@@ -13,7 +13,6 @@ type Props = {
   userName: string;
   schoolName: string;
   courses: { id: string; name: string; color: string }[];
-  signOutSlot: React.ReactNode;
   children: React.ReactNode;
 };
 
@@ -47,7 +46,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function AppShell({ userName, schoolName, courses, signOutSlot, children }: Props) {
+export function AppShell({ userName, schoolName, courses, children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -59,7 +58,7 @@ export function AppShell({ userName, schoolName, courses, signOutSlot, children 
       >
         <SidebarHeader schoolName={schoolName} />
         <SidebarNav />
-        <SidebarFooter userName={userName} signOutSlot={signOutSlot} />
+        <SidebarFooter userName={userName} />
       </aside>
 
       {/* Mobile drawer */}
@@ -82,7 +81,7 @@ export function AppShell({ userName, schoolName, courses, signOutSlot, children 
               </button>
             </div>
             <SidebarNav onNavigate={() => setMobileOpen(false)} />
-            <SidebarFooter userName={userName} signOutSlot={signOutSlot} />
+            <SidebarFooter userName={userName} />
           </aside>
         </div>
       )}
@@ -135,7 +134,7 @@ function SidebarHeader({ schoolName, compact = false }: { schoolName: string; co
   );
 }
 
-function SidebarFooter({ userName, signOutSlot }: { userName: string; signOutSlot: React.ReactNode }) {
+function SidebarFooter({ userName }: { userName: string }) {
   return (
     <div className="space-y-1 border-t px-3 py-3" style={{ borderColor: "var(--color-border)" }}>
       <div className="flex items-center gap-2 px-3 py-1.5">
@@ -150,7 +149,6 @@ function SidebarFooter({ userName, signOutSlot }: { userName: string; signOutSlo
         </p>
       </div>
       <ThemeToggle />
-      {signOutSlot}
     </div>
   );
 }

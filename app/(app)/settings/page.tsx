@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Users } from "lucide-react";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/current-user";
 import { PageHeader } from "@/components/page-header";
 import { ProfileCard } from "@/components/settings/profile-card";
-import { PasswordCard } from "@/components/settings/password-card";
 import { SemesterCard } from "@/components/settings/semester-card";
 import { CsvImportCard } from "@/components/settings/csv-import-card";
 import { bulkAddStudents } from "@/lib/actions/students";
@@ -13,11 +12,8 @@ import { bulkAddCourses } from "@/lib/actions/settings";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
-
   const [user, courseCount, studentCount, breaks] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.user.id } }),
+    getCurrentUser(),
     prisma.course.count(),
     prisma.student.count(),
     prisma.calendarEvent.findMany({ where: { type: "BREAK" }, orderBy: { date: "asc" } }),
@@ -37,7 +33,6 @@ export default async function SettingsPage() {
             semesterEnd={user.semesterEnd ? user.semesterEnd.toISOString().slice(0, 10) : ""}
             breaks={breaks}
           />
-          <PasswordCard />
         </div>
 
         <div className="space-y-6">

@@ -1,16 +1,17 @@
 "use server";
 
 import { z } from "zod";
-import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/current-user";
 import type { ActionResult } from "@/lib/actions/tasks";
 
+// Single-user, no-login app — every settings action just operates on the
+// one seeded admin/teacher account.
 async function currentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not signed in.");
-  return session.user.id;
+  const user = await getCurrentUser();
+  if (!user) throw new Error("No user found — has the database been seeded?");
+  return user.id;
 }
 
 const profileSchema = z.object({
@@ -58,37 +59,6 @@ export async function updateSemesterDates(formData: FormData): Promise<ActionRes
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Could not update semester dates." };
-  }
-}
-
-const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(8, "New password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((d) => d.newPassword === d.confirmPassword, { message: "New passwords don't match.", path: ["confirmPassword"] });
-
-export async function changePassword(formData: FormData): Promise<ActionResult> {
-  try {
-    const id = await currentUserId();
-    const data = passwordSchema.parse({
-      currentPassword: formData.get("currentPassword"),
-      newPassword: formData.get("newPassword"),
-      confirmPassword: formData.get("confirmPassword"),
-    });
-
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) return { ok: false, error: "User not found." };
-
-    const valid = await bcrypt.compare(data.currentPassword, user.password);
-    if (!valid) return { ok: false, error: "Current password is incorrect." };
-
-    const hash = await bcrypt.hash(data.newPassword, 10);
-    await prisma.user.update({ where: { id }, data: { password: hash } });
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Could not change password." };
   }
 }
 
